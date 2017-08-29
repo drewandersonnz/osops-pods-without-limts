@@ -142,8 +142,8 @@ def main():
 
     for namespace in args.namespace:
         statistics = get_pod_statistics_from_namespace(namespace,
-                                                       warn_if_pod_missing_limits=False,
-                                                       warn_if_pod_missing_requests=False,)
+                                                       warn_if_pod_missing_limits=True,
+                                                       warn_if_pod_missing_requests=True,)
 
         logger.warning("Statistics: %s", statistics)
         send_metrics(statistics)

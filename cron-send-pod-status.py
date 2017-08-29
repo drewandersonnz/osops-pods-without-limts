@@ -83,6 +83,23 @@ def send_metrics(statistics):
     #ms.send_metrics()
     logger.info("Data sent to Zagg in %s seconds", str(time.time() - ms_time))
 
+def pod_all_containers_have_limits(pod):
+    for container in pod['spec']['containers']:
+        if 'limits' not in container['resources']:
+            return False
+
+    return True
+
+def pod_all_containers_have_requests(pod):
+    for container in pod['spec']['containers']:
+        if 'requests' not in container['resources']:
+            return False
+
+    return True
+
+def get_pod_displayname(pod):
+    return pod['metadata']['namespace'] + '/' + pod['metadata']['name']
+
 def get_pod_statistics_from_namespace(namespace,
         warn_if_pod_missing_limits = False,
         warn_if_pod_missing_requests = False,
@@ -94,7 +111,19 @@ def get_pod_statistics_from_namespace(namespace,
     pods = runOCcmd_yaml('get pods')
 
     for pod in pods['items']:
-        logger.debug(yaml.safe_dump(pod, default_flow_style=False, ))
+        #logger.debug(yaml.safe_dump(pod, default_flow_style=False, ))
+        logger.debug(get_pod_displayname(pod))
+
+        if not pod_all_containers_have_limits(pod):
+            logger.critical("pod has no limits")
+
+        if not pod_all_containers_have_requests(pod):
+            logger.critical("pod has no requests")
+
+#['spec']['containers'][]['resources']['limits']:
+#['spec']['containers'][]['resources']['requests']:
+
+
 
 
 def main():

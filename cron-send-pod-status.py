@@ -96,7 +96,6 @@ def get_pod_statistics_from_namespace(namespace,
     for pod in pods['items']:
         logger.debug(yaml.safe_dump(pod, default_flow_style=False, ))
 
-    logger.critical(pods)
 
 def main():
     """ main() """

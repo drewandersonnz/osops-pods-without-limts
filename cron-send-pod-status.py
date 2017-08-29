@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""" Check aws instance health """
+""" Check pod limts and requests """
 
 ##pylint: disable=invalid-name
 ##pylint: disable=line-too-long
@@ -14,9 +14,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.WARN)
 
 import argparse
-#import os
 import time
-import yaml
 
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
@@ -73,17 +71,17 @@ def send_metrics(statistics):
     logger.debug("send_metrics(statistics)")
 
     ms_time = time.time()
-    #ms = MetricSender()
-    #logger.info("Send data to MetricSender")
-    #
-    ##ms.add_metric({'aws.ec2.instance.instance_status': problems['InstanceStatus']})
-    ##ms.add_metric({'aws.ec2.instance.system_status': problems['SystemStatus']})
-    ##ms.add_metric({'aws.ec2.instance.events': problems['Events']})
-    #
-    #ms.send_metrics()
+    ms = MetricSender()
+    logger.info("Send data to MetricSender")
+
+    ms.add_metric({'pod.without_limits': statistics['pods_without_limits']})
+    ms.add_metric({'pod.without_requests': statistics['pods_without_requests']})
+
+    ms.send_metrics()
     logger.info("Data sent to Zagg in %s seconds", str(time.time() - ms_time))
 
 def pod_all_containers_have_limits(pod):
+    """ pod_all_containers_have_limits """
     for container in pod['spec']['containers']:
         if 'limits' not in container['resources']:
             return False
@@ -91,6 +89,7 @@ def pod_all_containers_have_limits(pod):
     return True
 
 def pod_all_containers_have_requests(pod):
+    """ pod_all_containers_have_requests """
     for container in pod['spec']['containers']:
         if 'requests' not in container['resources']:
             return False
@@ -98,33 +97,39 @@ def pod_all_containers_have_requests(pod):
     return True
 
 def get_pod_displayname(pod):
+    """ get_pod_displayname """
     return pod['metadata']['namespace'] + '/' + pod['metadata']['name']
 
 def get_pod_statistics_from_namespace(namespace,
-        warn_if_pod_missing_limits = False,
-        warn_if_pod_missing_requests = False,
-    ):
+                                      warn_if_pod_missing_limits=False,
+                                      warn_if_pod_missing_requests=False, ):
+    """ get_pod_statistics_from_namespace """
     logger.debug("get_pod_statistics_from_namespace('%s')", get_pod_statistics_from_namespace)
 
     ocutil.namespace = namespace
 
     pods = runOCcmd_yaml('get pods')
 
+    results = {
+        'pods_without_limits': 0,
+        'pods_without_requests': 0,
+    }
+
     for pod in pods['items']:
-        #logger.debug(yaml.safe_dump(pod, default_flow_style=False, ))
-        logger.debug(get_pod_displayname(pod))
+        podname = get_pod_displayname(pod)
+        logger.debug(podname)
 
         if not pod_all_containers_have_limits(pod):
-            logger.critical("pod has no limits")
+            results['pods_without_limits'] += 1
+            if warn_if_pod_missing_limits:
+                logger.critical("pod has no limits: %s", podname)
 
         if not pod_all_containers_have_requests(pod):
-            logger.critical("pod has no requests")
+            results['pods_without_requests'] += 1
+            if warn_if_pod_missing_requests:
+                logger.critical("pod has no requests: %s", podname)
 
-#['spec']['containers'][]['resources']['limits']:
-#['spec']['containers'][]['resources']['requests']:
-
-
-
+    return results
 
 def main():
     """ main() """
@@ -136,9 +141,11 @@ def main():
         raise Exception("all-namespaces not yet implemented")
 
     for namespace in args.namespace:
-        statistics = get_pod_statistics_from_namespace(namespace)
+        statistics = get_pod_statistics_from_namespace(namespace,
+                                                       warn_if_pod_missing_limits=False,
+                                                       warn_if_pod_missing_requests=False,)
 
-        logger.warn("Statistics: %s", statistics)
+        logger.warning("Statistics: %s", statistics)
         send_metrics(statistics)
 
 if __name__ == "__main__":

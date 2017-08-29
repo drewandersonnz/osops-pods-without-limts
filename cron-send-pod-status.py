@@ -82,12 +82,18 @@ def send_metrics(statistics):
     #ms.send_metrics()
     logger.info("Data sent to Zagg in %s seconds", str(time.time() - ms_time))
 
-def get_pod_statistics_from_namespace(namespace):
+def get_pod_statistics_from_namespace(namespace,
+        warn_if_pod_missing_limits = False,
+        warn_if_pod_missing_requests = False,
+    ):
     logger.debug("get_pod_statistics_from_namespace('%s')", get_pod_statistics_from_namespace)
 
     ocutil.namespace = namespace
 
     pods = runOCcmd_yaml('get pods')
+
+    for pod in pods['items']:
+        logger.debug(pod)
 
     logger.critical(pods)
 

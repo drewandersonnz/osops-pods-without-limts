@@ -16,6 +16,7 @@ logger.setLevel(logging.WARN)
 import argparse
 #import os
 import time
+import yaml
 
 # Our jenkins server does not include these rpms.
 # In the future we might move this to a container where these
@@ -93,7 +94,7 @@ def get_pod_statistics_from_namespace(namespace,
     pods = runOCcmd_yaml('get pods')
 
     for pod in pods['items']:
-        logger.debug(pod)
+        logger.debug(yaml.safe_dump(pod, default_flow_style=False, ))
 
     logger.critical(pods)
 

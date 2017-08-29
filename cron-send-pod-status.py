@@ -140,13 +140,21 @@ def main():
     if args.all_namespaces:
         raise Exception("all-namespaces not yet implemented")
 
+    overall_statistics = {
+        'pods_without_limits': 0,
+        'pods_without_requests': 0,
+    }
+
     for namespace in args.namespace:
-        statistics = get_pod_statistics_from_namespace(namespace,
+        namespace_statistics = get_pod_statistics_from_namespace(namespace,
                                                        warn_if_pod_missing_limits=True,
                                                        warn_if_pod_missing_requests=True,)
 
-        logger.warning("Statistics: %s", statistics)
-        send_metrics(statistics)
+        overall_statistics['pods_without_limits'] += namespace_statistics['pods_without_limits']
+        overall_statistics['pods_without_requests'] += namespace_statistics['pods_without_requests']
+
+    logger.warning("overall_statistics: %s", overall_statistics)
+    send_metrics(overall_statistics)
 
 if __name__ == "__main__":
     main()

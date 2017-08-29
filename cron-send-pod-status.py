@@ -22,7 +22,7 @@ import time
 # libs might exist
 #pylint: disable=import-error
 from openshift_tools.monitoring.metric_sender import MetricSender
-from openshift_tools.cloud.aws.base import Base
+from openshift_tools.monitoring.ocutil import OCUtil
 
 ocutil = OCUtil()
 

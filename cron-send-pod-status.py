@@ -104,7 +104,7 @@ def get_pod_statistics_from_namespace(namespace,
                                       warn_if_pod_missing_limits=False,
                                       warn_if_pod_missing_requests=False, ):
     """ get_pod_statistics_from_namespace """
-    logger.info("get_pod_statistics_from_namespace('%s')", get_pod_statistics_from_namespace)
+    logger.info("get_pod_statistics_from_namespace('%s')", namespace)
 
     ocutil.namespace = namespace
 

@@ -21,25 +21,27 @@ import time
 # In the future we might move this to a container where these
 # libs might exist
 #pylint: disable=import-error
-#from openshift_tools.monitoring.metric_sender import MetricSender
-#from openshift_tools.cloud.aws.base import Base
-#
-#def runOCcmd(cmd, base_cmd='oc'):
-#    """ log commands through ocutil """
-#    logger.info(base_cmd + " " + cmd)
-#    oc_time = time.time()
-#    oc_result = ocutil.run_user_cmd(cmd, base_cmd=base_cmd, )
-#    logger.info("oc command took %s seconds", str(time.time() - oc_time))
-#    return oc_result
-#
-#def runOCcmd_yaml(cmd, base_cmd='oc'):
-#    """ log commands through ocutil """
-#    logger.info(base_cmd + " " + cmd)
-#    ocy_time = time.time()
-#    ocy_result = ocutil.run_user_cmd_yaml(cmd, base_cmd=base_cmd, )
-#    logger.info("oc command took %s seconds", str(time.time() - ocy_time))
-#    return ocy_result
-#
+from openshift_tools.monitoring.metric_sender import MetricSender
+from openshift_tools.cloud.aws.base import Base
+
+ocutil = OCUtil()
+
+def runOCcmd(cmd, base_cmd='oc'):
+    """ log commands through ocutil """
+    logger.info(base_cmd + " " + cmd)
+    oc_time = time.time()
+    oc_result = ocutil.run_user_cmd(cmd, base_cmd=base_cmd, )
+    logger.info("oc command took %s seconds", str(time.time() - oc_time))
+    return oc_result
+
+def runOCcmd_yaml(cmd, base_cmd='oc'):
+    """ log commands through ocutil """
+    logger.info(base_cmd + " " + cmd)
+    ocy_time = time.time()
+    ocy_result = ocutil.run_user_cmd_yaml(cmd, base_cmd=base_cmd, )
+    logger.info("oc command took %s seconds", str(time.time() - ocy_time))
+    return ocy_result
+
 def parse_args():
     """ parse the args from the cli """
     logger.debug("parse_args()")
@@ -80,6 +82,15 @@ def send_metrics(statistics):
     #ms.send_metrics()
     logger.info("Data sent to Zagg in %s seconds", str(time.time() - ms_time))
 
+def get_pod_statistics_from_namespace(namespace):
+    logger.debug("get_pod_statistics_from_namespace('%s')", get_pod_statistics_from_namespace)
+
+    ocutil.namespace = namespace
+
+    pods = runOCcmd_yaml('get pods')
+
+    logger.critical(pods)
+
 def main():
     """ main() """
     logger.debug("main()")
@@ -88,10 +99,9 @@ def main():
 
     if args.all_namespaces:
         raise Exception("all-namespaces not yet implemented")
-        logger.debug("all_namespaces")
 
     for namespace in args.namespace:
-        statistics = {}
+        statistics = get_pod_statistics_from_namespace(namespace)
 
         logger.warn("Statistics: %s", statistics)
         send_metrics(statistics)
